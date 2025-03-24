@@ -122,6 +122,11 @@ to update an image to the iamges to the latest commit:
 
 Always source ROS2 files (alias `s`)
 
+## MavProxy
+```bash
+mavproxy.py --master=udp:192.168.1.33:14550 --out=udp:192.168.1.50:14550
+```
+
 ## Commander
 
 - `px4-py/src/px4-py.py` for the offboard controller

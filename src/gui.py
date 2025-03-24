@@ -61,7 +61,7 @@ class GUI(Node):
     
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            # durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
             depth=1
         )
