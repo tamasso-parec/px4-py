@@ -6,7 +6,7 @@ from geometry_msgs.msg import PoseStamped
 from rclpy import qos
 
 
-import config
+import px4_py.config as config
 import random
 import logging
 

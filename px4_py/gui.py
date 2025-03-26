@@ -8,6 +8,7 @@ from commander_msg.msg import CommanderAll, CommanderPathPoint, CommanderArm, Co
 import numpy as np
 import json
 import math
+import os
 
 class GUI(Node):
     def __init__(self, root):
@@ -93,7 +94,7 @@ class GUI(Node):
         self.stop_button = ttk.Button(root, text="STOP", command=lambda: self.stop)
         self.stop_button.grid(row=6, column=2)
 
-        self.kill_button = ttk.Button(root, text="KILL", command=self.force_disarm)
+        self.kill_button = ttk.Button(root, text="KILL", command=self.kill_all)
         self.kill_button.grid(row=7, column=2)
         
         # Mode Selection
@@ -170,6 +171,9 @@ class GUI(Node):
         msg.timestamp = self.now()
         msg.arm=False
         self.commander_force_disarm_pub.publish(msg)
+
+    def kill_all(self):
+        os.system("killall -9 ros2")
 
     def action(self, action):
         msg = CommanderAction()
@@ -356,9 +360,21 @@ class GUI(Node):
         except:
             return np.array([0.0,0.0,0.0,0.0])
     
-if __name__ == "__main__":
-    rclpy.init()
+
+
+def main(args=None) -> None:
+    print('Starting gui...')
+    rclpy.init(args=args)
     root = tk.Tk()
     gui = GUI(root)
     root.mainloop()
     rclpy.shutdown()
+
+
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(e)
