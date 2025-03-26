@@ -9,7 +9,7 @@ from commander_msg.msg import CommanderAll, CommanderArm, CommanderMode, Command
 from std_msgs.msg import Float64MultiArray
 
 
-import config
+import px4_py.config as config
 import random
 import logging
 import threading
