@@ -26,7 +26,7 @@ setup(
         'console_scripts': [
             'gui = px4_py.gui:main',
             'px4_py = px4_py.px4_py:main',
-            # 'opti_to_px4 = px4_py.opti-to-px4:main',
+            'opti_to_px4 = px4_py.opti_to_px4:main',
         ],
     },
 )

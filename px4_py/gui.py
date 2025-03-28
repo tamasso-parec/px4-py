@@ -173,6 +173,7 @@ class GUI(Node):
         self.commander_force_disarm_pub.publish(msg)
 
     def kill_all(self):
+        self.force_disarm()
         os.system("killall -9 ros2")
 
     def action(self, action):
