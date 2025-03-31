@@ -14,6 +14,7 @@ import random
 import logging
 
 logging.basicConfig(level=config.log)
+
 def homogeneous_transform(quaternion, position):
     """Return homogeneous rotation matrix from quaternion.
 
