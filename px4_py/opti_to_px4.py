@@ -14,7 +14,6 @@ import random
 import logging
 
 logging.basicConfig(level=config.log)
-
 def homogeneous_transform(quaternion, position):
     """Return homogeneous rotation matrix from quaternion.
 
@@ -25,7 +24,7 @@ def homogeneous_transform(quaternion, position):
     """
     q = np.array(quaternion[:4], dtype=np.float64, copy=True)
     nq = np.dot(q, q)
-    if nq < 1e-8:
+    if nq < 1e-13:
         return np.identity(4)
     q *= math.sqrt(2.0 / nq)
     q = np.outer(q, q)
@@ -83,15 +82,24 @@ def odometry_msg_from_transformation_matrix(T):
     # Extract position from the transformation matrix
     position = np.array(T[:3, 3], dtype=np.float32)
 
+    # logging.info("Altitude: "+ str(position[2]))
     # Extract orientation from the transformation matrix
     q = quaternion_from_matrix(T)
 
-    
-    # Create a Pose message
+    # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
+    p_NED = np.array([position[0], position[2], -position[1]], dtype=np.float32)
+
+    # q=[qt.w,qt.x,qt.z,-qt.y]  
+    q_NED = np.array([q[3], q[0], q[2], -q[1]], dtype=np.float32)
+
+
+
     odometry_msg = VehicleOdometry()
-    odometry_msg.position = position
+    odometry_msg.position = p_NED
+
+
     
-    odometry_msg.q = q
+    odometry_msg.q = q_NED
     
     return odometry_msg
 
@@ -142,6 +150,16 @@ class Converter(Node):
         self.offboard_setpoint_counter = 0
         self.vehicle_local_position = VehicleLocalPosition()
         self.vehicle_status = VehicleStatus()
+
+        # Convert ENU to NED
+
+        #TODO: Fix this
+        self.T_ENU_to_NED = np.array([
+            [1, 0, 0, 0],
+            [0, 0, 1, 0],
+            [0, -1, 0, 0],
+            [0, 0, 0, 1]
+        ])
         
 
         # Create a timer to publish control commands
@@ -170,18 +188,24 @@ class Converter(Node):
             # Store the initial pose
 
             xyz = msg.pose.position
-            p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
+
+            p = [xyz.x, xyz.y, xyz.z]
+
+            # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
 
             
             qt=msg.pose.orientation
+
+            # Based on the way it is defined
+            q = [qt.x, qt.y, qt.z, qt.w]
             #qt=self.pose.pose.orientation
             
-            q=[
-                qt.w,
-                qt.x,
-                qt.z,
-                -qt.y
-            ]
+            # q=[
+            #     qt.w,
+            #     qt.x,
+            #     qt.z,
+            #     -qt.y
+            # ]
 
             
 
@@ -207,28 +231,42 @@ class Converter(Node):
         msg.timestamp_sample = int(self.get_clock().now().nanoseconds / 1000)
         
         xyz = self.pose.pose.position
-        p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
+        p = [xyz.x, xyz.y, xyz.z]
+
+        
+
+        # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
         
         qt=self.pose.pose.orientation
+        q = [ qt.x, qt.y, qt.z, qt.w]
         #qt=self.pose.pose.orientation
         
-        q=[
-            qt.w,
-            qt.x,
-            qt.z,
-            -qt.y
-        ]
+        # q=[
+        #     qt.w,
+        #     qt.x,
+        #     qt.z,
+        #     -qt.y
+        # ]
 
-        T_mocap = homogeneous_transform(q, p)
-        T_odometry = T_mocap @ self.initial_pose_inverse
-
+        # T_mocap = homogeneous_transform(q, p)
+        # T_odometry =  self.initial_pose_inverse @ T_mocap 
+        # self.get_logger().info(f"self.initial_pose_inverse:\n{self.initial_pose_inverse}")
         # Log the T_odometry transformation matrix
         # self.get_logger().info(f"T_odometry:\n{T_odometry}")
 
+
+        T_mocap = homogeneous_transform(q, p)
+
+        # Apply the ENU to NED transformation
         
+
+        T_odometry =  self.initial_pose_inverse @ T_mocap
+        
+        
+        msg = odometry_msg_from_transformation_matrix(T_odometry)
         msg.pose_frame=1 #NED frame
         msg.velocity_frame=1 #NED frame
-        msg = odometry_msg_from_transformation_matrix(T_odometry)
+        # self.get_logger().info(f"Position:\n{msg.position}")
 
         # msg.position=p
         # msg.q=q
