@@ -87,14 +87,20 @@ def odometry_msg_from_transformation_matrix(T):
     # Extract orientation from the transformation matrix
     q = quaternion_from_matrix(T)
 
-    
-    # Create a Pose message
+    # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
+    p_NED = np.array([position[0], position[2], -position[1]], dtype=np.float32)
+
+    # q=[qt.w,qt.x,qt.z,-qt.y]  
+    q_NED = np.array([q[3], q[0], q[2], -q[1]], dtype=np.float32)
+
+
+
     odometry_msg = VehicleOdometry()
-    odometry_msg.position = position
+    odometry_msg.position = p_NED
 
 
     
-    odometry_msg.q = q
+    odometry_msg.q = q_NED
     
     return odometry_msg
 
@@ -190,7 +196,9 @@ class Converter(Node):
 
             
             qt=msg.pose.orientation
-            q = [qt.w, qt.x, qt.y, qt.z]
+
+            # Based on the way it is defined
+            q = [qt.x, qt.y, qt.z, qt.w]
             #qt=self.pose.pose.orientation
             
             # q=[
@@ -231,7 +239,7 @@ class Converter(Node):
         # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
         
         qt=self.pose.pose.orientation
-        q = [qt.w, qt.x, qt.y, qt.z]
+        q = [ qt.x, qt.y, qt.z, qt.w]
         #qt=self.pose.pose.orientation
         
         # q=[
@@ -250,16 +258,16 @@ class Converter(Node):
 
         T_mocap = homogeneous_transform(q, p)
 
-
+        # Apply the ENU to NED transformation
         
 
-        T_odometry =  self.T_ENU_to_NED @ self.initial_pose_inverse @ T_mocap
+        T_odometry =  self.initial_pose_inverse @ T_mocap
         
         
-        # self.get_logger().info(f"Altitude:\n{T_odometry[2, 3]}")
         msg = odometry_msg_from_transformation_matrix(T_odometry)
         msg.pose_frame=1 #NED frame
         msg.velocity_frame=1 #NED frame
+        # self.get_logger().info(f"Position:\n{msg.position}")
 
         # msg.position=p
         # msg.q=q
