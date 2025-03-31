@@ -227,9 +227,7 @@ class Converter(Node):
         if not self.new:
             return 0
         
-        msg = VehicleOdometry()
-        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-        msg.timestamp_sample = int(self.get_clock().now().nanoseconds / 1000)
+        # msg = VehicleOdometry()
         
         xyz = self.pose.pose.position
         p = [xyz.x, xyz.y, xyz.z]
@@ -265,6 +263,10 @@ class Converter(Node):
         
         
         msg = odometry_msg_from_transformation_matrix(T_odometry)
+
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        msg.timestamp_sample = int(self.get_clock().now().nanoseconds / 1000)
+        
         msg.pose_frame=1 #NED frame
         msg.velocity_frame=1 #NED frame
         # self.get_logger().info(f"Position:\n{msg.position}")

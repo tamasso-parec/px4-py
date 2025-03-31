@@ -89,6 +89,10 @@ def odometry_msg_from_transformation_matrix(T):
     # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
     p_NED = np.array([position[0], position[2], -position[1]], dtype=np.float32)
 
+    # logging.info("p_NED: "+ str(p_NED))
+
+
+
     # q=[qt.w,qt.x,qt.z,-qt.y]  
     q_NED = np.array([q[3], q[0], q[2], -q[1]], dtype=np.float32)
 
@@ -179,12 +183,14 @@ class Converter(Node):
 
     def optitrack_pose_callback(self, msg):
         """Callback function for optitrack pose"""
-        logging.debug("recived pose")
+        logging.debug("received pose")
         self.pose = msg
         self.sub_pose = self.sub_pose + 1
         self.new = True
 
         if not self.initial_pose_stored_flag:
+
+            logging.info("Storing initial pose")
             # Store the initial pose
 
             xyz = msg.pose.position
@@ -226,9 +232,7 @@ class Converter(Node):
         if not self.new:
             return 0
         
-        msg = VehicleOdometry()
-        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-        msg.timestamp_sample = int(self.get_clock().now().nanoseconds / 1000)
+        
         
         xyz = self.pose.pose.position
         p = [xyz.x, xyz.y, xyz.z]
@@ -264,9 +268,14 @@ class Converter(Node):
         
         
         msg = odometry_msg_from_transformation_matrix(T_odometry)
+
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        msg.timestamp_sample = int(self.get_clock().now().nanoseconds / 1000)
+
         msg.pose_frame=1 #NED frame
         msg.velocity_frame=1 #NED frame
         # self.get_logger().info(f"Position:\n{msg.position}")
+
 
         # msg.position=p
         # msg.q=q
