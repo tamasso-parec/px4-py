@@ -101,9 +101,7 @@ def odometry_msg_from_transformation_matrix(T):
 
     odometry_msg = VehicleOdometry()
     odometry_msg.position = p_NED
-
-
-    
+   
     odometry_msg.q = q_NED
     
     return odometry_msg
@@ -197,6 +195,7 @@ class Converter(Node):
             xyz = msg.pose.position
 
             p = [xyz.x, xyz.y, xyz.z]
+            # p = [0.0, 0.0, 0.0]
 
             # p = [xyz.x, xyz.z, -xyz.y] #z with - for NED
 
@@ -232,6 +231,10 @@ class Converter(Node):
 
         if not self.new:
             return 0
+
+        if not self.initial_pose_stored_flag:
+            logging.warning("Initial pose not stored yet, skipping mocap odometry publication")
+            return 0
         
         
         
@@ -264,8 +267,10 @@ class Converter(Node):
 
         # Apply the ENU to NED transformation
         
-
         T_odometry =  self.initial_pose_inverse @ T_mocap
+        # T_odometry =  T_mocap
+
+        # T_odometry =  T_mocap
         
         
         msg = odometry_msg_from_transformation_matrix(T_odometry)
